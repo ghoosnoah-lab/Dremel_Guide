@@ -418,10 +418,20 @@
         };
 
         async function loadModel() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-            model = await tmImage.load(modelURL, metadataURL);
-        }
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+    
+    // Fetch metadata to see class names
+    const response = await fetch(metadataURL);
+    const metadata = await response.json();
+    console.log("=== TEACHABLE MACHINE CLASS NAMES ===");
+    metadata.labels.forEach((label, index) => {
+        console.log(`${index}: "${label}"`);
+    });
+    console.log("=====================================");
+    
+    model = await tmImage.load(modelURL, metadataURL);
+}
 
         async function predict(image) {
             const prediction = await model.predict(image, false);
