@@ -3,234 +3,458 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dremel Smart Guide</title>
+    <title>Dremel Tool Identifier</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            text-align: center;
-            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-        }
-        h1 { color: #cc0000; margin-bottom: 5px; }
-        p { color: #666; margin-bottom: 25px; }
-        
-        #image-container {
-            margin: 0 auto 20px auto;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            width: 300px;
-            height: 300px;
-            background: #e0e0e0;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
             position: relative;
         }
 
-        #uploaded-image {
-            max-width: 100%;
-            max-height: 100%;
-            display: none;
-        }
-
-        #placeholder-text {
-            color: #888;
-            font-size: 14px;
-            padding: 20px;
-        }
-        
-        #file-input { display: none; }
-
-        .upload-btn {
-            background-color: #cc0000;
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.2);
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 50px;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background 0.3s;
-            display: inline-block;
-            margin-bottom: 20px;
-            opacity: 1;
-        }
-        
-        /* Disabled state for button */
-        .upload-btn.disabled {
-            background-color: #999;
-            cursor: not-allowed;
-            pointer-events: none; /* Prevent clicking */
-        }
-
-        .upload-btn:hover { background-color: #a30000; }
-
-        #info-card {
             display: none;
-            background: white;
-            width: 90%;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .close-btn.visible {
+            display: flex;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .upload-section {
+            text-align: center;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
             max-width: 400px;
-            margin: 0 auto;
+            margin: 0 auto 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        #webcam, #uploadedImage {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #uploadedImage {
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .secondary-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .secondary-btn:hover {
+            background: #f0f0f0;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: left;
-            border-left: 8px solid #cc0000;
+            display: none;
         }
 
-        .label-title { 
-            font-size: 22px; 
-            font-weight: 800; 
-            margin-bottom: 15px; 
-            color: #2c3e50; 
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        .info-row { margin-bottom: 12px; font-size: 15px; line-height: 1.4; }
-        .info-label { font-weight: bold; color: #555; display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
-        
-        .rpm-badge { 
-            display: inline-block;
-            background: #fff0f0; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            color: #cc0000;
-            border: 1px solid #ffcccc;
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
         }
 
-        #status-msg { margin-top: 10px; color: #cc0000; font-weight: bold; min-height: 24px;}
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .result-header h2 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .confidence {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .info-card h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card p {
+            color: #333;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .icon {
+            font-size: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <button class="close-btn" id="closeBtn">×</button>
+            <h1>🛠️ Dremel Tool Identifier</h1>
+            <p>Identify your Dremel tool instantly</p>
+        </div>
 
-    <h1>Dremel Smart Guide</h1>
-    <p>Identify your rotary tool bit.</p>
+        <div class="content">
+            <div class="upload-section" id="uploadSection">
+                <div class="camera-container" id="cameraContainer" style="display: none;">
+                    <video id="webcam" autoplay playsinline></video>
+                </div>
+                
+                <div class="camera-container" id="imageContainer" style="display: none;">
+                    <img id="uploadedImage" alt="Uploaded tool">
+                </div>
 
-    <div id="image-container">
-        <span id="placeholder-text">Waiting for model...</span>
-        <img id="uploaded-image" alt="Tool Preview" />
-    </div>
+                <div class="button-group">
+                    <button class="primary-btn" id="cameraBtn">📷 Use Camera</button>
+                    <button class="secondary-btn" id="uploadBtn">📁 Upload Photo</button>
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
 
-    <label id="upload-label" for="file-input" class="upload-btn disabled">⏳ Loading AI Model...</label>
-    <input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(this)">
+                <div id="captureBtn" style="display: none; text-align: center;">
+                    <button class="primary-btn" id="takePictureBtn">📸 Capture & Identify</button>
+                </div>
+            </div>
 
-    <div id="status-msg"></div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing your tool...</p>
+            </div>
 
-    <div id="info-card">
-        <div id="tool-name" class="label-title">...</div>
-        <div class="info-row"><span class="info-label">Function</span><span id="tool-function">...</span></div>
-        <div class="info-row"><span class="info-label">Suitable Materials</span><span id="tool-material">...</span></div>
-        <div class="info-row"><span class="info-label">Optimal Speed (RPM)</span><span class="rpm-badge" id="tool-rpm">...</span></div>
+            <div class="result-section" id="resultSection">
+                <div class="result-header">
+                    <h2 id="toolName"></h2>
+                    <p class="confidence" id="confidence"></p>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">⚙️</span> Function</h3>
+                    <p id="function"></p>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">🔨</span> Materials</h3>
+                    <p id="materials"></p>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">⚡</span> Rotation Speed</h3>
+                    <p id="speed"></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/teachablemachine-image@latest/dist/teachablemachine-image.min.js"></script>
-    
-    <script type="text/javascript">
-        const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-        const toolsDatabase = {
-            "Sanding": { name: "Sanding Band", func: "Shaping, Smoothing & Removal", mat: "Wood, Fiberglass, Rubber", rpm: "10,000 - 20,000 RPM (Medium)" },
-            "Cutting": { name: "Cut-off Wheel", func: "Cutting, Trimming & Slicing", mat: "Metal, Hard Plastic, Tubing", rpm: "30,000+ RPM (High Speed)" },
-            "Grinding metal": { name: "Aluminum Oxide Stone (Orange)", func: "Sharpening & Deburring", mat: "Ferrous Metals (Steel, Iron)", rpm: "20,000 - 25,000 RPM" },
-            "Grinding stone": { name: "Silicon Carbide Stone (Green)", func: "Grinding & Etching", mat: "Stone, Glass, Ceramic, Non-ferrous", rpm: "20,000 - 25,000 RPM" },
-            "Polishing": { name: "Polishing Felt", func: "Polishing & Cleaning (use compound)", mat: "Silver, Gold, Brass, Hard Plastic", rpm: "12,000 - 15,000 RPM (Low Speed!)" },
-            "Engraving": { name: "Engraving Cutter", func: "Detailing, Carving & Engraving", mat: "Wood, Soft Metal, Glass, Leather", rpm: "Max Speed" }
+    <script>
+        const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
+        let model, webcam, maxPredictions;
+        let isWebcamActive = false;
+
+        const toolInfo = {
+            "Sanding": {
+                function: "Removes material, smooths surfaces, removes paint.",
+                materials: "Wood, fiberglass, rubber, soft metal.",
+                speed: "Medium (10,000 – 20,000 RPM)"
+            },
+            "Cutting": {
+                function: "Cuts through bolts, screws, pipes, and sheet metal.",
+                materials: "Metal, hard plastic, sometimes wood (with special disc).",
+                speed: "High (30,000+ RPM)"
+            },
+            "Polishing": {
+                function: "Polishes surfaces, cleans, removes scratches (use with polishing compound).",
+                materials: "Silver, gold, brass, chrome, hard plastic.",
+                speed: "Low (12,000 – 15,000 RPM)"
+            },
+            "Grinding metal": {
+                function: "Sharpens knives and screwdrivers, removes burrs from metal.",
+                materials: "Ferrous metals (iron, steel).",
+                speed: "Medium to High (20,000 – 25,000 RPM)"
+            },
+            "Grinding Stone": {
+                function: "Sharpens harder materials.",
+                materials: "Glass, stone, ceramic, non-ferrous metals.",
+                speed: "Medium to High (20,000 – 25,000 RPM)"
+            },
+            "Engraving": {
+                function: "Fine detail work, engraving names, creating patterns.",
+                materials: "Wood, plastic, soft metals, leather.",
+                speed: "High (maximum speed)"
+            }
         };
 
-        let model, maxPredictions;
-
-        // Start loading immediately
-        init();
-
-        async function init() {
-            try {
-                const modelURL = URL + "model.json";
-                const metadataURL = URL + "metadata.json";
-                
-                // Load model
-                model = await tmImage.load(modelURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
-
-                // Model Loaded! Enable the button
-                const btn = document.getElementById("upload-label");
-                btn.innerHTML = "📷 Take Photo / Upload";
-                btn.classList.remove("disabled");
-                document.getElementById("placeholder-text").innerText = "No image selected";
-                
-            } catch (error) {
-                alert("Error loading model: " + error);
-            }
+        async function loadModel() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
         }
 
-        function handleImageUpload(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('uploaded-image');
-                    img.src = e.target.result;
-                    img.style.display = "block";
-                    document.getElementById('placeholder-text').style.display = "none";
-                    document.getElementById("info-card").style.display = "none"; // Hide old result
-                    document.getElementById("status-msg").innerText = "Analyzing...";
-                    
-                    // Give the browser a split second to render the image before predicting
-                    setTimeout(() => predict(img), 100);
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
+        async function startWebcam() {
+            const flip = true;
+            webcam = new tmImage.Webcam(400, 400, flip);
+            await webcam.setup();
+            await webcam.play();
+            isWebcamActive = true;
+            document.getElementById("webcam").srcObject = webcam.webcam.srcObject;
+            document.getElementById("cameraContainer").style.display = "block";
+            document.getElementById("captureBtn").style.display = "block";
         }
 
-        async function predict(imageElement) {
-            try {
+        async function predict(image) {
+            const prediction = await model.predict(image);
+            let topPrediction = prediction[0];
+            
+            for (let i = 1; i < prediction.length; i++) {
+                if (prediction[i].probability > topPrediction.probability) {
+                    topPrediction = prediction[i];
+                }
+            }
+            
+            return topPrediction;
+        }
+
+        function displayResult(prediction) {
+            const toolName = prediction.className;
+            const confidence = (prediction.probability * 100).toFixed(1);
+            const info = toolInfo[toolName];
+
+            document.getElementById("toolName").textContent = toolName;
+            document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
+            document.getElementById("function").textContent = info.function;
+            document.getElementById("materials").textContent = info.materials;
+            document.getElementById("speed").textContent = info.speed;
+
+            document.getElementById("uploadSection").style.display = "none";
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("resultSection").style.display = "block";
+            document.getElementById("closeBtn").classList.add("visible");
+        }
+
+        function resetApp() {
+            if (isWebcamActive && webcam) {
+                webcam.stop();
+                isWebcamActive = false;
+            }
+            
+            document.getElementById("cameraContainer").style.display = "none";
+            document.getElementById("imageContainer").style.display = "none";
+            document.getElementById("captureBtn").style.display = "none";
+            document.getElementById("uploadSection").style.display = "block";
+            document.getElementById("resultSection").style.display = "none";
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("closeBtn").classList.remove("visible");
+            document.getElementById("fileInput").value = "";
+        }
+
+        document.getElementById("cameraBtn").addEventListener("click", async () => {
+            if (!model) await loadModel();
+            await startWebcam();
+        });
+
+        document.getElementById("uploadBtn").addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+        });
+
+        document.getElementById("fileInput").addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (file) {
                 if (!model) {
-                    alert("Model not loaded yet! Please wait.");
-                    return;
+                    document.getElementById("loading").style.display = "block";
+                    await loadModel();
                 }
 
-                const prediction = await model.predict(imageElement);
-                
-                let highestProbability = 0;
-                let bestClass = "";
-
-                for (let i = 0; i < maxPredictions; i++) {
-                    if (prediction[i].probability > highestProbability) {
-                        highestProbability = prediction[i].probability;
-                        bestClass = prediction[i].className;
-                    }
-                }
-
-                document.getElementById("status-msg").innerText = ""; // Clear status
-                const card = document.getElementById("info-card");
-                
-                // Logic: Must be > 80% confident AND not empty/background
-                if (bestClass !== "empty" && bestClass !== "background") { // Removed probability check for testing
-                    const toolInfo = toolsDatabase[bestClass];
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const img = document.getElementById("uploadedImage");
+                    img.src = event.target.result;
+                    document.getElementById("imageContainer").style.display = "block";
                     
-                    if (toolInfo) {
-                        card.style.display = "block";
-                        document.getElementById("tool-name").innerText = toolInfo.name;
-                        document.getElementById("tool-function").innerText = toolInfo.func;
-                        document.getElementById("tool-material").innerText = toolInfo.mat;
-                        document.getElementById("tool-rpm").innerText = toolInfo.rpm;
-                    } else {
-                        // Fallback: Tool recognized, but name doesn't match database exactly
-                        alert("Recognized class: '" + bestClass + "', but check spelling in database code.");
-                    }
-                } else {
-                    document.getElementById("status-msg").innerText = "No tool detected (or background).";
-                }
-
-            } catch (error) {
-                document.getElementById("status-msg").innerText = "Error during analysis.";
-                alert("Prediction Error: " + error);
+                    img.onload = async () => {
+                        document.getElementById("loading").style.display = "block";
+                        const prediction = await predict(img);
+                        displayResult(prediction);
+                    };
+                };
+                reader.readAsDataURL(file);
             }
-        }
+        });
+
+        document.getElementById("takePictureBtn").addEventListener("click", async () => {
+            document.getElementById("loading").style.display = "block";
+            const image = webcam.canvas;
+            const prediction = await predict(image);
+            
+            const capturedImg = document.getElementById("uploadedImage");
+            capturedImg.src = image.toDataURL();
+            
+            if (webcam) {
+                webcam.stop();
+                isWebcamActive = false;
+            }
+            
+            document.getElementById("cameraContainer").style.display = "none";
+            document.getElementById("imageContainer").style.display = "block";
+            
+            displayResult(prediction);
+        });
+
+        document.getElementById("closeBtn").addEventListener("click", resetApp);
     </script>
 </body>
 </html>
