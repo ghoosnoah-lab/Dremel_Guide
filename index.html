@@ -381,9 +381,10 @@
 
     <script>
         const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
-        const CONFIDENCE_THRESHOLD = 0.90;
+        const CONFIDENCE_THRESHOLD = 0.60; // Lowered to 60%
         let model;
 
+        // Try multiple variations of class names to handle any spelling
         const toolInfo = {
             "Sanding": {
                 function: "Removes material, smooths surfaces, removes paint.",
@@ -400,9 +401,19 @@
                 materials: "Silver, gold, brass, chrome, hard plastic.",
                 speed: "Low (12,000 – 15,000 RPM)"
             },
-            "Grinding Metal": {
+            "Grinding metal": {
                 function: "Sharpens knives and screwdrivers, removes burrs from metal.",
                 materials: "Ferrous metals (iron, steel).",
+                speed: "Medium to High (20,000 – 25,000 RPM)"
+            },
+            "Grinding Metal": {  // Alternative with capital M
+                function: "Sharpens knives and screwdrivers, removes burrs from metal.",
+                materials: "Ferrous metals (iron, steel).",
+                speed: "Medium to High (20,000 – 25,000 RPM)"
+            },
+            "Grinding stone": {  // Alternative with lowercase s
+                function: "Sharpens harder materials.",
+                materials: "Glass, stone, ceramic, non-ferrous metals.",
                 speed: "Medium to High (20,000 – 25,000 RPM)"
             },
             "Grinding Stone": {
@@ -418,23 +429,21 @@
         };
 
         async function loadModel() {
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
-    
-    // Fetch metadata to see class names
-    const response = await fetch(metadataURL);
-    const metadata = await response.json();
-    console.log("=== TEACHABLE MACHINE CLASS NAMES ===");
-    metadata.labels.forEach((label, index) => {
-        console.log(`${index}: "${label}"`);
-    });
-    console.log("=====================================");
-    
-    model = await tmImage.load(modelURL, metadataURL);
-}
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+        }
 
         async function predict(image) {
             const prediction = await model.predict(image, false);
+            
+            // DEBUG: Print all predictions to console
+            console.log("=== ALL PREDICTIONS ===");
+            prediction.forEach((pred, index) => {
+                console.log(`${index}: "${pred.className}" - ${(pred.probability * 100).toFixed(2)}%`);
+            });
+            console.log("=====================");
+            
             let topPrediction = prediction[0];
             
             for (let i = 1; i < prediction.length; i++) {
@@ -443,18 +452,46 @@
                 }
             }
             
+            console.log(`Top prediction: "${topPrediction.className}" at ${(topPrediction.probability * 100).toFixed(2)}%`);
+            
             return topPrediction;
         }
 
         function displayResult(prediction) {
+            const toolName = prediction.className;
+            const confidence = (prediction.probability * 100).toFixed(1);
+            
+            console.log(`Tool recognized: "${toolName}" at ${confidence}%`);
+            
+            // Check confidence threshold
             if (prediction.probability < CONFIDENCE_THRESHOLD) {
+                console.log(`Below threshold (${CONFIDENCE_THRESHOLD * 100}%)`);
                 showError();
                 return;
             }
 
-            const toolName = prediction.className;
-            const confidence = (prediction.probability * 100).toFixed(1);
             const info = toolInfo[toolName];
+            
+            // DEBUG: Check if tool info exists
+            console.log(`Looking for tool: "${toolName}"`);
+            console.log("Tool info found:", info ? "YES" : "NO");
+            if (!info) {
+                console.log("Available tools:", Object.keys(toolInfo));
+                // Show what we got anyway
+                document.getElementById("toolName").textContent = toolName + " ⚠️";
+                document.getElementById("confidence").textContent = `Confidence: ${confidence}% - INFO NOT AVAILABLE`;
+                document.getElementById("function").textContent = `Tool recognized as "${toolName}" but detailed information is not available. Please check the class name spelling.`;
+                document.getElementById("materials").textContent = "N/A";
+                document.getElementById("speed").textContent = "N/A";
+                
+                document.getElementById("uploadSection").style.display = "none";
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("errorSection").style.display = "none";
+                document.getElementById("resultSection").style.display = "block";
+                document.getElementById("resultSection").classList.add("active");
+                document.getElementById("closeBtn").classList.add("visible");
+                return;
+            }
 
             document.getElementById("toolName").textContent = toolName;
             document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
