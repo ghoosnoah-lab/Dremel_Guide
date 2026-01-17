@@ -224,6 +224,29 @@
             font-size: 20px;
         }
 
+        .error-section {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            animation: fadeIn 0.5s;
+        }
+
+        .error-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .error-section h2 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .error-section p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 20px;
@@ -244,7 +267,7 @@
         <div class="header">
             <button class="close-btn" id="closeBtn">×</button>
             <h1>🛠️ Dremel Tool Identifier</h1>
-            <p>Identify your Dremel tool instantly</p>
+            <p>Identificeer je Dremel gereedschap direct</p>
         </div>
 
         <div class="content">
@@ -258,19 +281,32 @@
                 </div>
 
                 <div class="button-group">
-                    <button class="primary-btn" id="cameraBtn">📷 Use Camera</button>
-                    <button class="secondary-btn" id="uploadBtn">📁 Upload Photo</button>
+                    <button class="primary-btn" id="cameraBtn">📷 Gebruik Camera</button>
+                    <button class="secondary-btn" id="uploadBtn">📁 Upload Foto</button>
                 </div>
-                <input type="file" id="fileInput" accept="image/*">
+                <input type="file" id="fileInput" accept="image/*" capture="environment">
 
                 <div id="captureBtn" style="display: none; text-align: center;">
-                    <button class="primary-btn" id="takePictureBtn">📸 Capture & Identify</button>
+                    <button class="primary-btn" id="takePictureBtn">📸 Maak Foto & Identificeer</button>
                 </div>
             </div>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Analyzing your tool...</p>
+                <p>Analyseren van je gereedschap...</p>
+            </div>
+
+            <div class="error-section" id="errorSection">
+                <div class="error-icon">❌</div>
+                <h2>Foto niet duidelijk genoeg</h2>
+                <p>Het model kan het gereedschap niet goed herkennen. Probeer een duidelijkere foto te maken met:</p>
+                <ul style="text-align: left; margin: 0 auto; max-width: 300px; color: #666;">
+                    <li>Betere verlichting</li>
+                    <li>Het gereedschap dichter bij de camera</li>
+                    <li>Een scherpere focus</li>
+                    <li>Minder achtergrond ruis</li>
+                </ul>
+                <button class="primary-btn" onclick="resetApp()" style="margin-top: 20px;">Probeer Opnieuw</button>
             </div>
 
             <div class="result-section" id="resultSection">
@@ -280,17 +316,17 @@
                 </div>
 
                 <div class="info-card">
-                    <h3><span class="icon">⚙️</span> Function</h3>
+                    <h3><span class="icon">⚙️</span> Functie</h3>
                     <p id="function"></p>
                 </div>
 
                 <div class="info-card">
-                    <h3><span class="icon">🔨</span> Materials</h3>
+                    <h3><span class="icon">🔨</span> Materialen</h3>
                     <p id="materials"></p>
                 </div>
 
                 <div class="info-card">
-                    <h3><span class="icon">⚡</span> Rotation Speed</h3>
+                    <h3><span class="icon">⚡</span> Rotatiesnelheid</h3>
                     <p id="speed"></p>
                 </div>
             </div>
@@ -302,39 +338,40 @@
 
     <script>
         const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
-        let model, webcam, maxPredictions;
+        const CONFIDENCE_THRESHOLD = 0.85; // 85% drempelwaarde
+        let model, webcamStream;
         let isWebcamActive = false;
 
         const toolInfo = {
             "Sanding": {
-                function: "Removes material, smooths surfaces, removes paint.",
-                materials: "Wood, fiberglass, rubber, soft metal.",
-                speed: "Medium (10,000 – 20,000 RPM)"
+                function: "Verwijdert materiaal, maakt oppervlakken glad, verwijdert verf.",
+                materials: "Hout, glasvezel, rubber, zacht metaal.",
+                speed: "Gemiddeld (10.000 – 20.000 RPM)"
             },
             "Cutting": {
-                function: "Cuts through bolts, screws, pipes, and sheet metal.",
-                materials: "Metal, hard plastic, sometimes wood (with special disc).",
-                speed: "High (30,000+ RPM)"
+                function: "Snijdt door bouten, schroeven, leidingen en plaatmetaal.",
+                materials: "Metaal, hard plastic, soms hout (met speciale schijf).",
+                speed: "Hoog (30.000+ RPM)"
             },
             "Polishing": {
-                function: "Polishes surfaces, cleans, removes scratches (use with polishing compound).",
-                materials: "Silver, gold, brass, chrome, hard plastic.",
-                speed: "Low (12,000 – 15,000 RPM)"
+                function: "Polijst oppervlakken, reinigt, verwijdert krassen (gebruik met polijstpasta).",
+                materials: "Zilver, goud, messing, chroom, hard plastic.",
+                speed: "Laag (12.000 – 15.000 RPM)"
             },
             "Grinding metal": {
-                function: "Sharpens knives and screwdrivers, removes burrs from metal.",
-                materials: "Ferrous metals (iron, steel).",
-                speed: "Medium to High (20,000 – 25,000 RPM)"
+                function: "Slijpt messen en schroevendraaiers, verwijdert bramen van metaal.",
+                materials: "Ferrometalen (ijzer, staal).",
+                speed: "Gemiddeld tot Hoog (20.000 – 25.000 RPM)"
             },
             "Grinding Stone": {
-                function: "Sharpens harder materials.",
-                materials: "Glass, stone, ceramic, non-ferrous metals.",
-                speed: "Medium to High (20,000 – 25,000 RPM)"
+                function: "Slijpt hardere materialen.",
+                materials: "Glas, steen, keramiek, non-ferrometalen.",
+                speed: "Gemiddeld tot Hoog (20.000 – 25.000 RPM)"
             },
             "Engraving": {
-                function: "Fine detail work, engraving names, creating patterns.",
-                materials: "Wood, plastic, soft metals, leather.",
-                speed: "High (maximum speed)"
+                function: "Fijn detailwerk, graveren van namen, maken van patronen.",
+                materials: "Hout, plastic, zachte metalen, leer.",
+                speed: "Hoog (maximale snelheid)"
             }
         };
 
@@ -342,22 +379,42 @@
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
             model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
         }
 
         async function startWebcam() {
-            const flip = true;
-            webcam = new tmImage.Webcam(400, 400, flip);
-            await webcam.setup();
-            await webcam.play();
-            isWebcamActive = true;
-            document.getElementById("webcam").srcObject = webcam.webcam.srcObject;
-            document.getElementById("cameraContainer").style.display = "block";
-            document.getElementById("captureBtn").style.display = "block";
+            try {
+                // Gebruik achtercamera op mobiel
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: "environment" }, // Achtercamera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById("webcam");
+                videoElement.srcObject = webcamStream;
+                
+                isWebcamActive = true;
+                document.getElementById("cameraContainer").style.display = "block";
+                document.getElementById("captureBtn").style.display = "block";
+            } catch (error) {
+                console.error("Camera error:", error);
+                alert("Kan camera niet openen. Probeer een foto te uploaden.");
+            }
+        }
+
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            isWebcamActive = false;
         }
 
         async function predict(image) {
-            const prediction = await model.predict(image);
+            const prediction = await model.predict(image, false);
             let topPrediction = prediction[0];
             
             for (let i = 1; i < prediction.length; i++) {
@@ -370,40 +427,57 @@
         }
 
         function displayResult(prediction) {
+            // Check confidence threshold
+            if (prediction.probability < CONFIDENCE_THRESHOLD) {
+                showError();
+                return;
+            }
+
             const toolName = prediction.className;
             const confidence = (prediction.probability * 100).toFixed(1);
             const info = toolInfo[toolName];
 
             document.getElementById("toolName").textContent = toolName;
-            document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
+            document.getElementById("confidence").textContent = `Zekerheid: ${confidence}%`;
             document.getElementById("function").textContent = info.function;
             document.getElementById("materials").textContent = info.materials;
             document.getElementById("speed").textContent = info.speed;
 
             document.getElementById("uploadSection").style.display = "none";
             document.getElementById("loading").style.display = "none";
+            document.getElementById("errorSection").style.display = "none";
             document.getElementById("resultSection").style.display = "block";
             document.getElementById("closeBtn").classList.add("visible");
         }
 
+        function showError() {
+            document.getElementById("uploadSection").style.display = "none";
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("resultSection").style.display = "none";
+            document.getElementById("errorSection").style.display = "block";
+            document.getElementById("closeBtn").classList.add("visible");
+        }
+
         function resetApp() {
-            if (isWebcamActive && webcam) {
-                webcam.stop();
-                isWebcamActive = false;
-            }
+            stopWebcam();
             
             document.getElementById("cameraContainer").style.display = "none";
             document.getElementById("imageContainer").style.display = "none";
             document.getElementById("captureBtn").style.display = "none";
             document.getElementById("uploadSection").style.display = "block";
             document.getElementById("resultSection").style.display = "none";
+            document.getElementById("errorSection").style.display = "none";
             document.getElementById("loading").style.display = "none";
             document.getElementById("closeBtn").classList.remove("visible");
             document.getElementById("fileInput").value = "";
         }
 
         document.getElementById("cameraBtn").addEventListener("click", async () => {
-            if (!model) await loadModel();
+            if (!model) {
+                document.getElementById("loading").style.display = "block";
+                await loadModel();
+                document.getElementById("loading").style.display = "none";
+            }
             await startWebcam();
         });
 
@@ -414,8 +488,9 @@
         document.getElementById("fileInput").addEventListener("change", async (e) => {
             const file = e.target.files[0];
             if (file) {
+                document.getElementById("loading").style.display = "block";
+                
                 if (!model) {
-                    document.getElementById("loading").style.display = "block";
                     await loadModel();
                 }
 
@@ -426,9 +501,13 @@
                     document.getElementById("imageContainer").style.display = "block";
                     
                     img.onload = async () => {
-                        document.getElementById("loading").style.display = "block";
-                        const prediction = await predict(img);
-                        displayResult(prediction);
+                        try {
+                            const prediction = await predict(img);
+                            displayResult(prediction);
+                        } catch (error) {
+                            console.error("Prediction error:", error);
+                            showError();
+                        }
                     };
                 };
                 reader.readAsDataURL(file);
@@ -437,21 +516,28 @@
 
         document.getElementById("takePictureBtn").addEventListener("click", async () => {
             document.getElementById("loading").style.display = "block";
-            const image = webcam.canvas;
-            const prediction = await predict(image);
             
-            const capturedImg = document.getElementById("uploadedImage");
-            capturedImg.src = image.toDataURL();
-            
-            if (webcam) {
-                webcam.stop();
-                isWebcamActive = false;
+            try {
+                const videoElement = document.getElementById("webcam");
+                const canvas = document.createElement('canvas');
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoElement, 0, 0);
+                
+                const capturedImg = document.getElementById("uploadedImage");
+                capturedImg.src = canvas.toDataURL('image/jpeg');
+                
+                stopWebcam();
+                document.getElementById("cameraContainer").style.display = "none";
+                document.getElementById("imageContainer").style.display = "block";
+                
+                const prediction = await predict(capturedImg);
+                displayResult(prediction);
+            } catch (error) {
+                console.error("Capture error:", error);
+                showError();
             }
-            
-            document.getElementById("cameraContainer").style.display = "none";
-            document.getElementById("imageContainer").style.display = "block";
-            
-            displayResult(prediction);
         });
 
         document.getElementById("closeBtn").addEventListener("click", resetApp);
