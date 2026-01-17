@@ -7,15 +7,14 @@
     <style>
         /* ========== COLOR VARIABLES - EASY TO CUSTOMIZE ========== */
         :root {
-            --primary-blue: #2563eb;      /* Royal blue - main accent color */
-            --primary-blue-dark: #1e40af; /* Darker blue for hover effects */
-            --neutral-bg: #f8f9fa;         /* Light beige/white background */
-            --neutral-white: #ffffff;      /* Pure white */
-            --neutral-gray: #6b7280;       /* Gray for text */
-            --neutral-light: #e5e7eb;      /* Light gray for borders */
-            --error-red: #ef4444;          /* Error color */
+            --primary-blue: #2563eb;
+            --primary-blue-dark: #1e40af;
+            --neutral-bg: #f8f9fa;
+            --neutral-white: #ffffff;
+            --neutral-gray: #6b7280;
+            --neutral-light: #e5e7eb;
+            --error-red: #ef4444;
         }
-        /* ======================================================== */
 
         * {
             margin: 0;
@@ -189,7 +188,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Blue frame for results */
         .result-section.active {
             border: 3px solid var(--primary-blue);
             border-radius: 15px;
@@ -316,7 +314,6 @@
         </div>
 
         <div class="content">
-            <!-- Upload Section -->
             <div class="upload-section" id="uploadSection">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📸</div>
@@ -331,13 +328,11 @@
                 <input type="file" id="fileInput" accept="image/*" capture="environment">
             </div>
 
-            <!-- Loading Section -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>Analyzing your tool...</p>
             </div>
 
-            <!-- Error Section -->
             <div class="error-section" id="errorSection">
                 <div class="error-icon">❌</div>
                 <h2>Image Not Clear Enough</h2>
@@ -351,7 +346,6 @@
                 <button class="retry-btn" onclick="resetApp()">Try Again</button>
             </div>
 
-            <!-- Result Section -->
             <div class="result-section" id="resultSection">
                 <div class="result-header">
                     <h2 id="toolName"></h2>
@@ -380,11 +374,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
-        const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
-        const CONFIDENCE_THRESHOLD = 0.60; // Lowered to 60%
-        let model;
-
-        // Try multiple variations of class names to handle any spelling
+        // ========== CONFIGURATION - CHANGE THESE ==========
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
+        const CONFIDENCE_THRESHOLD = 0.50; // 50% - lower = more lenient
+        
+        // Tool information database - MUST match your Teachable Machine class names EXACTLY
         const toolInfo = {
             "Sanding": {
                 function: "Removes material, smooths surfaces, removes paint.",
@@ -401,22 +395,12 @@
                 materials: "Silver, gold, brass, chrome, hard plastic.",
                 speed: "Low (12,000 – 15,000 RPM)"
             },
-            "Grinding metal": {
+            "GrindingMetal": {
                 function: "Sharpens knives and screwdrivers, removes burrs from metal.",
                 materials: "Ferrous metals (iron, steel).",
                 speed: "Medium to High (20,000 – 25,000 RPM)"
             },
-            "Grinding Metal": {  // Alternative with capital M
-                function: "Sharpens knives and screwdrivers, removes burrs from metal.",
-                materials: "Ferrous metals (iron, steel).",
-                speed: "Medium to High (20,000 – 25,000 RPM)"
-            },
-            "Grinding stone": {  // Alternative with lowercase s
-                function: "Sharpens harder materials.",
-                materials: "Glass, stone, ceramic, non-ferrous metals.",
-                speed: "Medium to High (20,000 – 25,000 RPM)"
-            },
-            "Grinding Stone": {
+            "GrindingStone": {
                 function: "Sharpens harder materials.",
                 materials: "Glass, stone, ceramic, non-ferrous metals.",
                 speed: "Medium to High (20,000 – 25,000 RPM)"
@@ -427,70 +411,70 @@
                 speed: "High (maximum speed)"
             }
         };
+        // ==================================================
+
+        let model;
 
         async function loadModel() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-            model = await tmImage.load(modelURL, metadataURL);
+            try {
+                const modelURL = MODEL_URL + "model.json";
+                const metadataURL = MODEL_URL + "metadata.json";
+                model = await tmImage.load(modelURL, metadataURL);
+                console.log("Model loaded successfully");
+            } catch (error) {
+                console.error("Failed to load model:", error);
+                alert("Failed to load AI model. Please check your internet connection and model URL.");
+            }
         }
 
-        async function predict(image) {
-            const prediction = await model.predict(image, false);
-            
-            // DEBUG: Print all predictions to console
-            console.log("=== ALL PREDICTIONS ===");
-            prediction.forEach((pred, index) => {
-                console.log(`${index}: "${pred.className}" - ${(pred.probability * 100).toFixed(2)}%`);
-            });
-            console.log("=====================");
-            
-            let topPrediction = prediction[0];
-            
-            for (let i = 1; i < prediction.length; i++) {
-                if (prediction[i].probability > topPrediction.probability) {
-                    topPrediction = prediction[i];
+        async function analyzeImage(imageElement) {
+            try {
+                const predictions = await model.predict(imageElement);
+                
+                // Find highest confidence prediction
+                let topPrediction = predictions[0];
+                for (let i = 1; i < predictions.length; i++) {
+                    if (predictions[i].probability > topPrediction.probability) {
+                        topPrediction = predictions[i];
+                    }
                 }
+                
+                console.log(`Recognized: ${topPrediction.className} (${(topPrediction.probability * 100).toFixed(1)}%)`);
+                return topPrediction;
+            } catch (error) {
+                console.error("Prediction failed:", error);
+                throw error;
             }
-            
-            console.log(`Top prediction: "${topPrediction.className}" at ${(topPrediction.probability * 100).toFixed(2)}%`);
-            
-            return topPrediction;
         }
 
         function displayResult(prediction) {
-            const toolName = prediction.className;
+            const className = prediction.className;
             const confidence = (prediction.probability * 100).toFixed(1);
             
-            console.log(`Tool recognized: "${toolName}" at ${confidence}%`);
-            console.log("All available tool names:", Object.keys(toolInfo));
-            
-            // TEMPORARILY DISABLED - Show result regardless of confidence
-            // if (prediction.probability < CONFIDENCE_THRESHOLD) {
-            //     console.log(`Below threshold (${CONFIDENCE_THRESHOLD * 100}%)`);
-            //     showError();
-            //     return;
-            // }
-
-            const info = toolInfo[toolName];
-            
-            console.log(`Looking for tool: "${toolName}"`);
-            console.log("Tool info found:", info ? "YES" : "NO");
-            
-            if (!info) {
-                // Show what we got anyway - with warning
-                document.getElementById("toolName").textContent = toolName + " ⚠️ NOT IN DATABASE";
-                document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
-                document.getElementById("function").textContent = `Teachable Machine recognized this as "${toolName}" but this name is not in our database. Check console for details.`;
-                document.getElementById("materials").textContent = "Check class name spelling in Teachable Machine";
-                document.getElementById("speed").textContent = "N/A";
-            } else {
-                document.getElementById("toolName").textContent = toolName;
-                document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
-                document.getElementById("function").textContent = info.function;
-                document.getElementById("materials").textContent = info.materials;
-                document.getElementById("speed").textContent = info.speed;
+            // Check if confidence is high enough
+            if (prediction.probability < CONFIDENCE_THRESHOLD) {
+                showError();
+                return;
             }
-
+            
+            // Check if we have info for this tool
+            const info = toolInfo[className];
+            if (!info) {
+                console.error(`No info found for class: "${className}"`);
+                console.log("Available classes:", Object.keys(toolInfo));
+                alert(`Tool recognized as "${className}" but no information available. Check class names in code.`);
+                showError();
+                return;
+            }
+            
+            // Display results
+            document.getElementById("toolName").textContent = className;
+            document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
+            document.getElementById("function").textContent = info.function;
+            document.getElementById("materials").textContent = info.materials;
+            document.getElementById("speed").textContent = info.speed;
+            
+            // Show result section
             document.getElementById("uploadSection").style.display = "none";
             document.getElementById("loading").style.display = "none";
             document.getElementById("errorSection").style.display = "none";
@@ -518,40 +502,44 @@
             document.getElementById("fileInput").value = "";
         }
 
-        // Upload area click handler
+        // Event Listeners
         document.getElementById("uploadArea").addEventListener("click", () => {
             document.getElementById("fileInput").click();
         });
 
-        // File input change handler
         document.getElementById("fileInput").addEventListener("change", async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                document.getElementById("loading").style.display = "block";
-                document.getElementById("uploadSection").style.display = "none";
-                
-                if (!model) {
-                    await loadModel();
-                }
-
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    const img = document.getElementById("uploadedImage");
-                    img.src = event.target.result;
-                    document.getElementById("imageContainer").style.display = "block";
-                    
-                    img.onload = async () => {
-                        try {
-                            const prediction = await predict(img);
-                            displayResult(prediction);
-                        } catch (error) {
-                            console.error("Prediction error:", error);
-                            showError();
-                        }
-                    };
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+            
+            // Show loading
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("uploadSection").style.display = "none";
+            
+            // Load model if not loaded
+            if (!model) {
+                await loadModel();
             }
+            
+            // Load and display image
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const img = document.getElementById("uploadedImage");
+                img.src = event.target.result;
+                document.getElementById("imageContainer").style.display = "block";
+                
+                // Wait for image to load, then analyze
+                img.onload = async () => {
+                    try {
+                        const prediction = await analyzeImage(img);
+                        displayResult(prediction);
+                    } catch (error) {
+                        console.error("Analysis error:", error);
+                        alert("Error analyzing image: " + error.message);
+                        showError();
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
         });
 
         document.getElementById("closeBtn").addEventListener("click", resetApp);
