@@ -462,42 +462,34 @@
             const confidence = (prediction.probability * 100).toFixed(1);
             
             console.log(`Tool recognized: "${toolName}" at ${confidence}%`);
+            console.log("All available tool names:", Object.keys(toolInfo));
             
-            // Check confidence threshold
-            if (prediction.probability < CONFIDENCE_THRESHOLD) {
-                console.log(`Below threshold (${CONFIDENCE_THRESHOLD * 100}%)`);
-                showError();
-                return;
-            }
+            // TEMPORARILY DISABLED - Show result regardless of confidence
+            // if (prediction.probability < CONFIDENCE_THRESHOLD) {
+            //     console.log(`Below threshold (${CONFIDENCE_THRESHOLD * 100}%)`);
+            //     showError();
+            //     return;
+            // }
 
             const info = toolInfo[toolName];
             
-            // DEBUG: Check if tool info exists
             console.log(`Looking for tool: "${toolName}"`);
             console.log("Tool info found:", info ? "YES" : "NO");
+            
             if (!info) {
-                console.log("Available tools:", Object.keys(toolInfo));
-                // Show what we got anyway
-                document.getElementById("toolName").textContent = toolName + " ⚠️";
-                document.getElementById("confidence").textContent = `Confidence: ${confidence}% - INFO NOT AVAILABLE`;
-                document.getElementById("function").textContent = `Tool recognized as "${toolName}" but detailed information is not available. Please check the class name spelling.`;
-                document.getElementById("materials").textContent = "N/A";
+                // Show what we got anyway - with warning
+                document.getElementById("toolName").textContent = toolName + " ⚠️ NOT IN DATABASE";
+                document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
+                document.getElementById("function").textContent = `Teachable Machine recognized this as "${toolName}" but this name is not in our database. Check console for details.`;
+                document.getElementById("materials").textContent = "Check class name spelling in Teachable Machine";
                 document.getElementById("speed").textContent = "N/A";
-                
-                document.getElementById("uploadSection").style.display = "none";
-                document.getElementById("loading").style.display = "none";
-                document.getElementById("errorSection").style.display = "none";
-                document.getElementById("resultSection").style.display = "block";
-                document.getElementById("resultSection").classList.add("active");
-                document.getElementById("closeBtn").classList.add("visible");
-                return;
+            } else {
+                document.getElementById("toolName").textContent = toolName;
+                document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
+                document.getElementById("function").textContent = info.function;
+                document.getElementById("materials").textContent = info.materials;
+                document.getElementById("speed").textContent = info.speed;
             }
-
-            document.getElementById("toolName").textContent = toolName;
-            document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
-            document.getElementById("function").textContent = info.function;
-            document.getElementById("materials").textContent = info.materials;
-            document.getElementById("speed").textContent = info.speed;
 
             document.getElementById("uploadSection").style.display = "none";
             document.getElementById("loading").style.display = "none";
