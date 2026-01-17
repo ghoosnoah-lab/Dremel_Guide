@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dremel Tool Identifier</title>
     <style>
+        /* ========== COLOR VARIABLES - EASY TO CUSTOMIZE ========== */
+        :root {
+            --primary-blue: #2563eb;      /* Royal blue - main accent color */
+            --primary-blue-dark: #1e40af; /* Darker blue for hover effects */
+            --neutral-bg: #f8f9fa;         /* Light beige/white background */
+            --neutral-white: #ffffff;      /* Pure white */
+            --neutral-gray: #6b7280;       /* Gray for text */
+            --neutral-light: #e5e7eb;      /* Light gray for borders */
+            --error-red: #ef4444;          /* Error color */
+        }
+        /* ======================================================== */
+
         * {
             margin: 0;
             padding: 0;
@@ -13,7 +25,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--neutral-bg);
             min-height: 100vh;
             padding: 20px;
             display: flex;
@@ -22,9 +34,9 @@
         }
 
         .container {
-            background: white;
+            background: var(--neutral-white);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             max-width: 500px;
             width: 100%;
             overflow: hidden;
@@ -32,21 +44,23 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--neutral-white);
+            color: var(--primary-blue);
             padding: 30px 20px;
             text-align: center;
             position: relative;
+            border-bottom: 2px solid var(--neutral-light);
         }
 
         .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 700;
         }
 
         .header p {
             font-size: 14px;
-            opacity: 0.9;
+            color: var(--neutral-gray);
         }
 
         .close-btn {
@@ -55,7 +69,7 @@
             right: 15px;
             width: 35px;
             height: 35px;
-            background: rgba(255, 255, 255, 0.2);
+            background: var(--error-red);
             border: none;
             border-radius: 50%;
             color: white;
@@ -64,11 +78,14 @@
             display: none;
             align-items: center;
             justify-content: center;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            font-weight: 300;
+            line-height: 1;
         }
 
         .close-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: #dc2626;
+            transform: scale(1.1);
         }
 
         .close-btn.visible {
@@ -83,64 +100,53 @@
             text-align: center;
         }
 
-        .camera-container {
+        .upload-area {
+            border: 3px dashed var(--neutral-light);
+            border-radius: 15px;
+            padding: 50px 30px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--neutral-bg);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-blue);
+            background: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .upload-area h3 {
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .upload-area p {
+            color: var(--neutral-gray);
+            font-size: 14px;
+        }
+
+        .image-container {
             position: relative;
             width: 100%;
             max-width: 400px;
             margin: 0 auto 20px;
             border-radius: 15px;
             overflow: hidden;
-            background: #f0f0f0;
-        }
-
-        #webcam, #uploadedImage {
-            width: 100%;
-            height: auto;
-            display: block;
+            background: var(--neutral-bg);
+            display: none;
         }
 
         #uploadedImage {
+            width: 100%;
             max-height: 400px;
             object-fit: contain;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .primary-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .secondary-btn {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-
-        .secondary-btn:hover {
-            background: #f0f0f0;
+            display: block;
         }
 
         #fileInput {
@@ -149,13 +155,13 @@
 
         .loading {
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
             display: none;
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 4px solid var(--neutral-light);
+            border-top: 4px solid var(--primary-blue);
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -168,6 +174,11 @@
             100% { transform: rotate(360deg); }
         }
 
+        .loading p {
+            color: var(--neutral-gray);
+            font-size: 15px;
+        }
+
         .result-section {
             display: none;
             animation: fadeIn 0.5s;
@@ -178,11 +189,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Blue frame for results */
+        .result-section.active {
+            border: 3px solid var(--primary-blue);
+            border-radius: 15px;
+            padding: 20px;
+            background: #eff6ff;
+        }
+
         .result-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-blue);
             color: white;
             padding: 20px;
-            border-radius: 15px;
+            border-radius: 12px;
             margin-bottom: 20px;
             text-align: center;
         }
@@ -194,28 +213,30 @@
 
         .confidence {
             font-size: 14px;
-            opacity: 0.9;
+            opacity: 0.95;
         }
 
         .info-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 5px solid #667eea;
+            background: var(--neutral-white);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary-blue);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .info-card h3 {
-            color: #667eea;
+            color: var(--primary-blue);
             font-size: 16px;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 600;
         }
 
         .info-card p {
-            color: #333;
+            color: var(--neutral-gray);
             line-height: 1.6;
             font-size: 15px;
         }
@@ -237,27 +258,51 @@
         }
 
         .error-section h2 {
-            color: #e74c3c;
+            color: var(--error-red);
             margin-bottom: 10px;
+            font-size: 22px;
         }
 
         .error-section p {
-            color: #666;
+            color: var(--neutral-gray);
             line-height: 1.6;
             margin-bottom: 20px;
         }
 
+        .error-section ul {
+            text-align: left;
+            margin: 0 auto 20px;
+            max-width: 300px;
+            color: var(--neutral-gray);
+            line-height: 1.8;
+        }
+
+        .retry-btn {
+            background: var(--primary-blue);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .retry-btn:hover {
+            background: var(--primary-blue-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }
+
         @media (max-width: 480px) {
             .header h1 {
-                font-size: 20px;
+                font-size: 22px;
             }
             
-            .button-group {
-                flex-direction: column;
-            }
-            
-            button {
-                width: 100%;
+            .upload-area {
+                padding: 40px 20px;
             }
         }
     </style>
@@ -267,48 +312,46 @@
         <div class="header">
             <button class="close-btn" id="closeBtn">×</button>
             <h1>🛠️ Dremel Tool Identifier</h1>
-            <p>Identificeer je Dremel gereedschap direct</p>
+            <p>Identify your Dremel tool instantly</p>
         </div>
 
         <div class="content">
+            <!-- Upload Section -->
             <div class="upload-section" id="uploadSection">
-                <div class="camera-container" id="cameraContainer" style="display: none;">
-                    <video id="webcam" autoplay playsinline></video>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📸</div>
+                    <h3>Take or Upload a Photo</h3>
+                    <p>Click to take a photo or select from gallery</p>
                 </div>
                 
-                <div class="camera-container" id="imageContainer" style="display: none;">
+                <div class="image-container" id="imageContainer">
                     <img id="uploadedImage" alt="Uploaded tool">
                 </div>
 
-                <div class="button-group">
-                    <button class="primary-btn" id="cameraBtn">📷 Gebruik Camera</button>
-                    <button class="secondary-btn" id="uploadBtn">📁 Upload Foto</button>
-                </div>
                 <input type="file" id="fileInput" accept="image/*" capture="environment">
-
-                <div id="captureBtn" style="display: none; text-align: center;">
-                    <button class="primary-btn" id="takePictureBtn">📸 Maak Foto & Identificeer</button>
-                </div>
             </div>
 
+            <!-- Loading Section -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Analyseren van je gereedschap...</p>
+                <p>Analyzing your tool...</p>
             </div>
 
+            <!-- Error Section -->
             <div class="error-section" id="errorSection">
                 <div class="error-icon">❌</div>
-                <h2>Foto niet duidelijk genoeg</h2>
-                <p>Het model kan het gereedschap niet goed herkennen. Probeer een duidelijkere foto te maken met:</p>
-                <ul style="text-align: left; margin: 0 auto; max-width: 300px; color: #666;">
-                    <li>Betere verlichting</li>
-                    <li>Het gereedschap dichter bij de camera</li>
-                    <li>Een scherpere focus</li>
-                    <li>Minder achtergrond ruis</li>
+                <h2>Image Not Clear Enough</h2>
+                <p>The model cannot recognize the tool clearly. Try taking a better photo with:</p>
+                <ul>
+                    <li>Better lighting</li>
+                    <li>Tool closer to camera</li>
+                    <li>Sharper focus</li>
+                    <li>Less background clutter</li>
                 </ul>
-                <button class="primary-btn" onclick="resetApp()" style="margin-top: 20px;">Probeer Opnieuw</button>
+                <button class="retry-btn" onclick="resetApp()">Try Again</button>
             </div>
 
+            <!-- Result Section -->
             <div class="result-section" id="resultSection">
                 <div class="result-header">
                     <h2 id="toolName"></h2>
@@ -316,17 +359,17 @@
                 </div>
 
                 <div class="info-card">
-                    <h3><span class="icon">⚙️</span> Functie</h3>
+                    <h3><span class="icon">⚙️</span> Function</h3>
                     <p id="function"></p>
                 </div>
 
                 <div class="info-card">
-                    <h3><span class="icon">🔨</span> Materialen</h3>
+                    <h3><span class="icon">🔨</span> Materials</h3>
                     <p id="materials"></p>
                 </div>
 
                 <div class="info-card">
-                    <h3><span class="icon">⚡</span> Rotatiesnelheid</h3>
+                    <h3><span class="icon">⚡</span> Rotation Speed</h3>
                     <p id="speed"></p>
                 </div>
             </div>
@@ -338,40 +381,39 @@
 
     <script>
         const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
-        const CONFIDENCE_THRESHOLD = 0.85; // 85% drempelwaarde
-        let model, webcamStream;
-        let isWebcamActive = false;
+        const CONFIDENCE_THRESHOLD = 0.85;
+        let model;
 
         const toolInfo = {
             "Sanding": {
-                function: "Verwijdert materiaal, maakt oppervlakken glad, verwijdert verf.",
-                materials: "Hout, glasvezel, rubber, zacht metaal.",
-                speed: "Gemiddeld (10.000 – 20.000 RPM)"
+                function: "Removes material, smooths surfaces, removes paint.",
+                materials: "Wood, fiberglass, rubber, soft metal.",
+                speed: "Medium (10,000 – 20,000 RPM)"
             },
             "Cutting": {
-                function: "Snijdt door bouten, schroeven, leidingen en plaatmetaal.",
-                materials: "Metaal, hard plastic, soms hout (met speciale schijf).",
-                speed: "Hoog (30.000+ RPM)"
+                function: "Cuts through bolts, screws, pipes, and sheet metal.",
+                materials: "Metal, hard plastic, sometimes wood (with special disc).",
+                speed: "High (30,000+ RPM)"
             },
             "Polishing": {
-                function: "Polijst oppervlakken, reinigt, verwijdert krassen (gebruik met polijstpasta).",
-                materials: "Zilver, goud, messing, chroom, hard plastic.",
-                speed: "Laag (12.000 – 15.000 RPM)"
+                function: "Polishes surfaces, cleans, removes scratches (use with polishing compound).",
+                materials: "Silver, gold, brass, chrome, hard plastic.",
+                speed: "Low (12,000 – 15,000 RPM)"
             },
             "Grinding metal": {
-                function: "Slijpt messen en schroevendraaiers, verwijdert bramen van metaal.",
-                materials: "Ferrometalen (ijzer, staal).",
-                speed: "Gemiddeld tot Hoog (20.000 – 25.000 RPM)"
+                function: "Sharpens knives and screwdrivers, removes burrs from metal.",
+                materials: "Ferrous metals (iron, steel).",
+                speed: "Medium to High (20,000 – 25,000 RPM)"
             },
             "Grinding Stone": {
-                function: "Slijpt hardere materialen.",
-                materials: "Glas, steen, keramiek, non-ferrometalen.",
-                speed: "Gemiddeld tot Hoog (20.000 – 25.000 RPM)"
+                function: "Sharpens harder materials.",
+                materials: "Glass, stone, ceramic, non-ferrous metals.",
+                speed: "Medium to High (20,000 – 25,000 RPM)"
             },
             "Engraving": {
-                function: "Fijn detailwerk, graveren van namen, maken van patronen.",
-                materials: "Hout, plastic, zachte metalen, leer.",
-                speed: "Hoog (maximale snelheid)"
+                function: "Fine detail work, engraving names, creating patterns.",
+                materials: "Wood, plastic, soft metals, leather.",
+                speed: "High (maximum speed)"
             }
         };
 
@@ -379,38 +421,6 @@
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
             model = await tmImage.load(modelURL, metadataURL);
-        }
-
-        async function startWebcam() {
-            try {
-                // Gebruik achtercamera op mobiel
-                const constraints = {
-                    video: {
-                        facingMode: { ideal: "environment" }, // Achtercamera
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                };
-
-                webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
-                const videoElement = document.getElementById("webcam");
-                videoElement.srcObject = webcamStream;
-                
-                isWebcamActive = true;
-                document.getElementById("cameraContainer").style.display = "block";
-                document.getElementById("captureBtn").style.display = "block";
-            } catch (error) {
-                console.error("Camera error:", error);
-                alert("Kan camera niet openen. Probeer een foto te uploaden.");
-            }
-        }
-
-        function stopWebcam() {
-            if (webcamStream) {
-                webcamStream.getTracks().forEach(track => track.stop());
-                webcamStream = null;
-            }
-            isWebcamActive = false;
         }
 
         async function predict(image) {
@@ -427,7 +437,6 @@
         }
 
         function displayResult(prediction) {
-            // Check confidence threshold
             if (prediction.probability < CONFIDENCE_THRESHOLD) {
                 showError();
                 return;
@@ -438,7 +447,7 @@
             const info = toolInfo[toolName];
 
             document.getElementById("toolName").textContent = toolName;
-            document.getElementById("confidence").textContent = `Zekerheid: ${confidence}%`;
+            document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
             document.getElementById("function").textContent = info.function;
             document.getElementById("materials").textContent = info.materials;
             document.getElementById("speed").textContent = info.speed;
@@ -447,6 +456,7 @@
             document.getElementById("loading").style.display = "none";
             document.getElementById("errorSection").style.display = "none";
             document.getElementById("resultSection").style.display = "block";
+            document.getElementById("resultSection").classList.add("active");
             document.getElementById("closeBtn").classList.add("visible");
         }
 
@@ -459,36 +469,27 @@
         }
 
         function resetApp() {
-            stopWebcam();
-            
-            document.getElementById("cameraContainer").style.display = "none";
             document.getElementById("imageContainer").style.display = "none";
-            document.getElementById("captureBtn").style.display = "none";
             document.getElementById("uploadSection").style.display = "block";
             document.getElementById("resultSection").style.display = "none";
+            document.getElementById("resultSection").classList.remove("active");
             document.getElementById("errorSection").style.display = "none";
             document.getElementById("loading").style.display = "none";
             document.getElementById("closeBtn").classList.remove("visible");
             document.getElementById("fileInput").value = "";
         }
 
-        document.getElementById("cameraBtn").addEventListener("click", async () => {
-            if (!model) {
-                document.getElementById("loading").style.display = "block";
-                await loadModel();
-                document.getElementById("loading").style.display = "none";
-            }
-            await startWebcam();
-        });
-
-        document.getElementById("uploadBtn").addEventListener("click", () => {
+        // Upload area click handler
+        document.getElementById("uploadArea").addEventListener("click", () => {
             document.getElementById("fileInput").click();
         });
 
+        // File input change handler
         document.getElementById("fileInput").addEventListener("change", async (e) => {
             const file = e.target.files[0];
             if (file) {
                 document.getElementById("loading").style.display = "block";
+                document.getElementById("uploadSection").style.display = "none";
                 
                 if (!model) {
                     await loadModel();
@@ -511,32 +512,6 @@
                     };
                 };
                 reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById("takePictureBtn").addEventListener("click", async () => {
-            document.getElementById("loading").style.display = "block";
-            
-            try {
-                const videoElement = document.getElementById("webcam");
-                const canvas = document.createElement('canvas');
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(videoElement, 0, 0);
-                
-                const capturedImg = document.getElementById("uploadedImage");
-                capturedImg.src = canvas.toDataURL('image/jpeg');
-                
-                stopWebcam();
-                document.getElementById("cameraContainer").style.display = "none";
-                document.getElementById("imageContainer").style.display = "block";
-                
-                const prediction = await predict(capturedImg);
-                displayResult(prediction);
-            } catch (error) {
-                console.error("Capture error:", error);
-                showError();
             }
         });
 
