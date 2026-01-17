@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dremel Smart Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { color: #cc0000; margin-bottom: 5px; }
+        p { color: #666; margin-bottom: 25px; }
+        
+        /* Image Preview Area */
+        #image-container {
+            margin: 0 auto 20px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 300px;
+            height: 300px;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #uploaded-image {
+            max-width: 100%;
+            max-height: 100%;
+            display: none; /* Hidden until image is chosen */
+        }
+
+        #placeholder-text {
+            color: #888;
+            font-size: 14px;
+            padding: 20px;
+        }
+        
+        /* The "Real" file input is hidden, we use a label as button */
+        #file-input { display: none; }
+
+        .upload-btn {
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.3s;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .upload-btn:hover { background-color: #a30000; }
+        .upload-btn:active { transform: scale(0.98); }
+
+        /* The Info Card */
+        #info-card {
+            display: none;
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: left;
+            border-left: 8px solid #cc0000;
+        }
+
+        .label-title { 
+            font-size: 22px; 
+            font-weight: 800; 
+            margin-bottom: 15px; 
+            color: #2c3e50; 
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .info-row { margin-bottom: 12px; font-size: 15px; line-height: 1.4; }
+        .info-label { font-weight: bold; color: #555; display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .rpm-badge { 
+            display: inline-block;
+            background: #fff0f0; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            color: #cc0000;
+            border: 1px solid #ffcccc;
+        }
+
+        /* Loading Spinner */
+        #loading { display: none; margin-top: 10px; color: #cc0000; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+    <h1>Dremel Smart Guide</h1>
+    <p>Take a photo or upload an image to identify the tool.</p>
+
+    <div id="image-container">
+        <span id="placeholder-text">No image selected</span>
+        <img id="uploaded-image" alt="Tool Preview" />
+    </div>
+
+    <label for="file-input" class="upload-btn">📷 Take Photo / Upload</label>
+    <input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(this)">
+
+    <div id="loading">Analyzing...</div>
+
+    <div id="info-card">
+        <div id="tool-name" class="label-title">...</div>
+        
+        <div class="info-row">
+            <span class="info-label">Function</span>
+            <span id="tool-function">...</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="info-label">Suitable Materials</span>
+            <span id="tool-material">...</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="info-label">Optimal Speed (RPM)</span>
+            <span class="rpm-badge" id="tool-rpm">...</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/teachablemachine-image@latest/dist/teachablemachine-image.min.js"></script>
+    
+    <script type="text/javascript">
+        // ----------------------------------------------------------------
+        // YOUR MODEL LINK
+        const URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
+        // ----------------------------------------------------------------
+
+        const toolsDatabase = {
+            "Sanding": {
+                name: "Sanding Band",
+                func: "Shaping, Smoothing & Removal",
+                mat: "Wood, Fiberglass, Rubber",
+                rpm: "10,000 - 20,000 RPM (Medium)"
+            },
+            "Cutting": {
+                name: "Cut-off Wheel",
+                func: "Cutting, Trimming & Slicing",
+                mat: "Metal, Hard Plastic, Tubing",
+                rpm: "30,000+ RPM (High Speed)"
+            },
+            "Grinding metal": { 
+                name: "Aluminum Oxide Stone (Orange)",
+                func: "Sharpening & Deburring",
+                mat: "Ferrous Metals (Steel, Iron)",
+                rpm: "20,000 - 25,000 RPM"
+            },
+            "Grinding stone": {
+                name: "Silicon Carbide Stone (Green)",
+                func: "Grinding & Etching",
+                mat: "Stone, Glass, Ceramic, Non-ferrous",
+                rpm: "20,000 - 25,000 RPM"
+            },
+            "Polishing": {
+                name: "Polishing Felt",
+                func: "Polishing & Cleaning (use compound)",
+                mat: "Silver, Gold, Brass, Hard Plastic",
+                rpm: "12,000 - 15,000 RPM (Low Speed!)"
+            },
+            "Engraving": {
+                name: "Engraving Cutter",
+                func: "Detailing, Carving & Engraving",
+                mat: "Wood, Soft Metal, Glass, Leather",
+                rpm: "Max Speed"
+            }
+        };
+
+        let model, maxPredictions;
+
+        // Load the model immediately when page loads
+        init();
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+        }
+
+        function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = document.getElementById('uploaded-image');
+                    img.src = e.target.result;
+                    img.style.display = "block";
+                    document.getElementById('placeholder-text').style.display = "none";
+                    
+                    // Wait a moment for image to load, then predict
+                    img.onload = function() {
+                        predict(img);
+                    }
+                };
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function predict(imageElement) {
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("info-card").style.display = "none";
+
+            const prediction = await model.predict(imageElement);
+            
+            let highestProbability = 0;
+            let bestClass = "";
+
+            for (let i = 0; i < maxPredictions; i++) {
+                if (prediction[i].probability > highestProbability) {
+                    highestProbability = prediction[i].probability;
+                    bestClass = prediction[i].className;
+                }
+            }
+
+            document.getElementById("loading").style.display = "none";
+            const card = document.getElementById("info-card");
+            
+            // Show result
+            if (bestClass !== "empty" && bestClass !== "background") {
+                const toolInfo = toolsDatabase[bestClass];
+                
+                if (toolInfo) {
+                    card.style.display = "block";
+                    document.getElementById("tool-name").innerText = toolInfo.name;
+                    document.getElementById("tool-function").innerText = toolInfo.func;
+                    document.getElementById("tool-material").innerText = toolInfo.mat;
+                    document.getElementById("tool-rpm").innerText = toolInfo.rpm;
+                } else {
+                     // Fallback if class exists but no data
+                    alert("Tool recognized: " + bestClass + ", but no data found.");
+                }
+            } else {
+                alert("No specific tool detected. Please try again.");
+            }
+        }
+    </script>
+</body>
+</html>
