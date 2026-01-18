@@ -378,34 +378,42 @@
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/VQrr5Hp0O/";
         const CONFIDENCE_THRESHOLD = 0.50; // 50% - lower = more lenient
         
-        // Tool information database - MUST match your Teachable Machine class names EXACTLY
+        // Tool information database
+        // Keys MUST match Teachable Machine class names EXACTLY
+        // displayName is what the user sees
         const toolInfo = {
             "Sanding": {
+                displayName: "Sanding Band",
                 function: "Removes material, smooths surfaces, removes paint.",
                 materials: "Wood, fiberglass, rubber, soft metal.",
                 speed: "Medium (10,000 – 20,000 RPM)"
             },
             "Cutting": {
+                displayName: "Cut-Off Wheel",
                 function: "Cuts through bolts, screws, pipes, and sheet metal.",
                 materials: "Metal, hard plastic, sometimes wood (with special disc).",
                 speed: "High (30,000+ RPM)"
             },
             "Polishing": {
+                displayName: "Felt Polishing Wheel",
                 function: "Polishes surfaces, cleans, removes scratches (use with polishing compound).",
                 materials: "Silver, gold, brass, chrome, hard plastic.",
                 speed: "Low (12,000 – 15,000 RPM)"
             },
             "Grinding met...": {
+                displayName: "Aluminum Oxide Grinding Stone",
                 function: "Sharpens knives and screwdrivers, removes burrs from metal.",
                 materials: "Ferrous metals (iron, steel).",
                 speed: "Medium to High (20,000 – 25,000 RPM)"
             },
             "Grinding sto...": {
+                displayName: "Silicon Carbide Grinding Stone",
                 function: "Sharpens harder materials.",
                 materials: "Glass, stone, ceramic, non-ferrous metals.",
                 speed: "Medium to High (20,000 – 25,000 RPM)"
             },
             "Engraving": {
+                displayName: "Engraving Cutter",
                 function: "Fine detail work, engraving names, creating patterns.",
                 materials: "Wood, plastic, soft metals, leather.",
                 speed: "High (maximum speed)"
@@ -467,8 +475,8 @@
                 return;
             }
             
-            // Display results
-            document.getElementById("toolName").textContent = className;
+            // Display results - use displayName instead of className
+            document.getElementById("toolName").textContent = info.displayName;
             document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
             document.getElementById("function").textContent = info.function;
             document.getElementById("materials").textContent = info.materials;
